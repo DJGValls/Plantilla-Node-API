@@ -1,5 +1,5 @@
 import { UserModel } from "models/user.model";
-import { PaginatedResponse, PaginationOptions, Query, SortOptions } from "types/RepositoryTypes";
+import { FindOptions, PaginatedResponse, PaginationOptions, Query, SortOptions } from "types/RepositoryTypes";
 import { InterfaceUserRepository, User } from "types/UserTypes";
 
 export class UserRepository implements InterfaceUserRepository {
@@ -8,15 +8,29 @@ export class UserRepository implements InterfaceUserRepository {
         return await newUser.save();
     }
 
-    async find(query?: Query, sort?: SortOptions, pagination?: PaginationOptions): Promise<PaginatedResponse<User>> {
+    async find(query?: Query, options?: FindOptions): Promise<PaginatedResponse<User>> {
+        const { pagination, sort, populate } = options || {};
         const { page = 1, limit = 10 } = pagination || {};
         const skip = (page - 1) * limit;
-        const queryBuilder = UserModel.find(query || {});
+        let queryBuilder = UserModel.find(query || {});
+        // Aplicar populate si se especifica
+        if (populate && populate.length > 0) {
+            populate.forEach((option) => {
+                try {
+                    queryBuilder = queryBuilder.populate(option);
+                } catch (error) {
+                    console.error('Error applying populate:', error);
+                }
+            });
+        }
         if (sort && Object.keys(sort).length > 0) {
             queryBuilder.sort(sort);
         }
         const total = await UserModel.countDocuments(query || {});
-        const items = await queryBuilder.skip(skip).limit(limit).exec();
+        console.log(total)
+        let items = await queryBuilder.skip(skip).limit(limit).exec();
+        console.log(options);
+        console.log(items);
         return {
             items,
             pagination: {
@@ -28,12 +42,28 @@ export class UserRepository implements InterfaceUserRepository {
         };
     }
 
-    async findById(id: string): Promise<User | null> {
-        return await UserModel.findById(id).populate("roles").exec();
+    async findById(id: string, options?: FindOptions): Promise<User | null> {
+        let queryBuilder = UserModel.findById(id);
+
+        if (options?.populate) {
+            options.populate.forEach((option) => {
+                queryBuilder = queryBuilder.populate(option);
+            });
+        }
+
+        return await queryBuilder.exec();
     }
 
-    async findOne(query: any): Promise<User | null> {
-        return await UserModel.findOne(query).populate("roles").exec();
+    async findOne(query: any, options?: FindOptions): Promise<User | null> {
+        let queryBuilder = UserModel.findOne(query);
+
+        if (options?.populate) {
+            options.populate.forEach((option) => {
+                queryBuilder = queryBuilder.populate(option);
+            });
+        }
+
+        return await queryBuilder.exec();
     }
 
     async update(id: string, data: User): Promise<User | null> {

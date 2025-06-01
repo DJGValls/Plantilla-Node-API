@@ -1,12 +1,18 @@
-import { SortOptions, PaginationOptions } from "types/RepositoryTypes";
+import { SortOptions, PaginationOptions, PopulateOptions } from "types/RepositoryTypes";
 
-export function FilterBuilder(query: any): { filter: any; sort: SortOptions; pagination: PaginationOptions } {
+export function FilterBuilder(query: any): {
+    filter: any;
+    sort: SortOptions;
+    pagination: PaginationOptions;
+    populate?: PopulateOptions[];
+} {
     const filter: any = {};
     const sort: SortOptions = {};
     const pagination: PaginationOptions = {
         page: 1,
         limit: 10,
     };
+    let populate: PopulateOptions[] | undefined;
 
     if (!query) return { filter, sort, pagination };
 
@@ -17,7 +23,12 @@ export function FilterBuilder(query: any): { filter: any; sort: SortOptions; pag
     if (query.limit) {
         pagination.limit = parseInt(query.limit);
     }
-
+    // Procesar populate
+    if (query.populate) {
+        populate = Array.isArray(query.populate)
+            ? query.populate.map((path: string) => (typeof path === "string" ? { path } : path))
+            : [{ path: query.populate }];
+    }
     // Procesar filtros en formato filter[field]=value
     Object.keys(query).forEach((key) => {
         if (key === "sort") {
@@ -62,5 +73,5 @@ export function FilterBuilder(query: any): { filter: any; sort: SortOptions; pag
             }
         }
     });
-    return { filter, sort, pagination };
+    return { filter, sort, pagination, populate };
 }
