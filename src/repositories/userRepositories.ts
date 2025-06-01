@@ -1,5 +1,5 @@
 import { UserModel } from "models/user.model";
-import { Query } from "types/RepositoryTypes";
+import { Query, SortOptions } from "types/RepositoryTypes";
 import { InterfaceUserRepository, User } from "types/UserTypes";
 
 export class UserRepository implements InterfaceUserRepository {
@@ -9,8 +9,12 @@ export class UserRepository implements InterfaceUserRepository {
         return await newUser.save();
     }
 
-    async find(query?: Query): Promise<User[]> {
-        return await UserModel.find(query || {}).populate("roles").exec();
+    async find(query?: Query, sort?: SortOptions): Promise<User[]> {
+        const queryBuilder = UserModel.find(query || {});
+        if (sort && Object.keys(sort).length > 0) {
+            queryBuilder.sort(sort);
+        }
+        return await queryBuilder.populate("roles").exec();
     }
 
     async findById(id: string): Promise<User | null> {

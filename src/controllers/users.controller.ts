@@ -10,7 +10,8 @@ const userService = new UserService(userRepository);
 
 export const findUsers = async (req: Request, res: Response) => {
     try {
-        const users = await userService.findUsers();
+        const filters = req.query;
+        const users = await userService.findUsers(filters);
         if (users.length === 0) {
             res.status(404).json(ResponseHandler.notFound("Usuarios no encontrados", 404));
             return;

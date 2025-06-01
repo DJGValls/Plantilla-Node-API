@@ -1,5 +1,6 @@
 import { Query } from "types/RepositoryTypes";
 import { InterfaceUserRepository, InterfaceUserService, User } from "../types/UserTypes";
+import { FilterBuilder } from "utils/queryBuilders/FilterBuilder";
 
 export class UserService implements InterfaceUserService {
     private userRepository: InterfaceUserRepository;
@@ -12,7 +13,8 @@ export class UserService implements InterfaceUserService {
         return await this.userRepository.create(user);
     }
     async findUsers(query?: Query): Promise<User[]> {
-        return await this.userRepository.find(query);
+        const { filter, sort } = FilterBuilder(query);
+        return await this.userRepository.find(filter, sort);
     }
     async findUserById(id: string): Promise<User | null> {
         return await this.userRepository.findById(id);

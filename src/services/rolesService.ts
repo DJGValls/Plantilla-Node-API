@@ -1,5 +1,6 @@
 import { Query } from "types/RepositoryTypes";
 import { InterfaceRolesRepository, InterfaceRolesService, Roles } from "types/RolesTypes";
+import { FilterBuilder } from "utils/queryBuilders/FilterBuilder";
 
 export class RolesService implements InterfaceRolesService {
     private rolesRepository: InterfaceRolesRepository;
@@ -12,7 +13,8 @@ export class RolesService implements InterfaceRolesService {
         return await this.rolesRepository.create(roles);
     }
     async findRoles(query?: Query): Promise<Roles[]> {
-        return await this.rolesRepository.find(query);
+        const { filter, sort } = FilterBuilder(query);
+        return await this.rolesRepository.find(filter, sort);
     }
     async findRolesById(id: string): Promise<Roles | null> {
         return await this.rolesRepository.findById(id);
