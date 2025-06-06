@@ -4,13 +4,15 @@ import { InterfaceRolesRepository, Roles } from "types/RolesTypes";
 import { Request, Response } from "express";
 import { ResponseHandler } from "utils/ResponseHandler";
 import mongoose from "mongoose";
+import { sortsBuilder } from "utils/queryBuilders/CustomSortsBuilder";
 
 const rolesRepository: InterfaceRolesRepository = new RolesRepository();
 const rolesService = new RolesService(rolesRepository);
 
 export const findRoles = async (req: Request, res: Response) => {
     try {
-        const roles = await rolesService.findRoles();
+        const sortQuery = sortsBuilder(req.query.sort);
+        const roles = await rolesService.findRoles({}, sortQuery);
         if (roles.length === 0) {
             res.status(404).json(ResponseHandler.notFound("No se encontraron roles", 404));
             return;
@@ -37,9 +39,9 @@ export const findRolesById = async (req: Request, res: Response) => {
         }
         res.status(200).json(ResponseHandler.success(role, "Rol encontrado exitosamente"));
         return;
-    } catch (error) {
+   } catch (error) {
         console.error("Error al buscar rol:", error);
-        if (error instanceof mongoose.Error) {
+        if (error instanceof mongoose.Error || error === 'CastError') {
             res.status(400).json(ResponseHandler.handleMongooseError(error));
             return;
         }
